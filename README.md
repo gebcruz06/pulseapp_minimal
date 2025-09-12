@@ -1,0 +1,1 @@
+CLI version of the Pulse App desktop app to add watermark to product images, upload to blob storage, and update the SQL database
