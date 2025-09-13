@@ -1,0 +1,172 @@
+use qa
+go
+ALTER PROCEDURE UpsertProductImage
+AS
+BEGIN
+    MERGE prod.dbo.[ProductImage] AS target
+    USING (
+    SELECT DISTINCT
+        pid.[ImageID],
+		pid.[ImageIdentifier],
+        pid.[ImageName],
+        pid.[ImageType],
+        pid.[FileSize],
+        pid.[Width],
+        pid.[Height],
+        pid.[LocationRaw],
+        pid.[CreatedBy] AS ImageCreatedBy,
+        pid.[CreatedDate] AS ImageCreatedDate,
+        pid.[BrandID],
+        pid.[BrandName],
+        pid.[Tag],
+        pid.[ProductID],
+        pid.[LogoID],
+        pid.[LogoName],
+        pid.[LogoLocation],
+        pid.[LogoPlacementID],
+        pid.[LogoPlacementName],
+        pid.[MarketID],
+        pid.[MarketName],
+        pid.[CatalogName],
+        pid.[ProductImageNo],
+        pid.[ProcessedFlag],
+        pid.[ProductImageName],
+        pid.[LocationProcessed],
+        pid.[ProcessedBy] AS ImageProcessedBy,
+        pid.[ProcessedDate] AS ImageProcessedDate,
+        (CASE WHEN cs.CCV2PartNo IS NOT NULL THEN 1 ELSE 0 END) AS CCV2Staging,
+        cs.[creationtime] AS CCV2StagingDate,
+        (CASE WHEN cp.CCV2PartNo IS NOT NULL THEN 1 ELSE 0 END) AS CCV2Production,
+        cp.[creationtime] AS CCV2ProductionDate,
+        'PulseApp Pipeline' AS Createdby,
+        GETDATE() AS CreatedDate,
+		'PulseApp Pipeline' AS Updatedby,
+        GETDATE() AS UpdatedDate
+    FROM [apidev].[dbo].[vPulseAppProductImageData] AS pid
+    LEFT JOIN [auto].[dbo].[vCCV2MediaContainerStaged] AS cs
+        ON CONCAT(pid.Tag, pid.ProductID) = cs.CCV2PartNo
+        AND pid.CatalogName = cs.catalogversion
+        AND pid.ProductImageNo = cs.ProductImageNo
+    LEFT JOIN [auto].[dbo].[vCCV2MediaContainerProduction] AS cp
+        ON CONCAT(pid.Tag, pid.ProductID) = cp.CCV2PartNo
+        AND pid.CatalogName = cp.catalogversion
+        AND pid.ProductImageNo = cp.ProductImageNo
+) AS source
+ON target.[ImageID] = source.[ImageID]
+WHEN MATCHED THEN
+    UPDATE SET 
+        target.[ImageIdentifier] = source.[ImageIdentifier],
+		target.[ImageName] = source.[ImageName],
+        target.[ImageType] = source.[ImageType],
+        target.[FileSize] = source.[FileSize],
+        target.[Width] = source.[Width],
+        target.[Height] = source.[Height],
+        target.[LocationRaw] = source.[LocationRaw],
+        target.[ImageCreatedBy] = source.[ImageCreatedBy],
+        target.[ImageCreatedDate] = source.[ImageCreatedDate],
+        target.[BrandID] = source.[BrandID],
+        target.[BrandName] = source.[BrandName],
+        target.[Tag] = source.[Tag],
+        target.[ProductID] = source.[ProductID],
+        target.[LogoID] = source.[LogoID],
+        target.[LogoName] = source.[LogoName],
+        target.[LogoLocation] = source.[LogoLocation],
+        target.[LogoPlacementID] = source.[LogoPlacementID],
+        target.[LogoPlacementName] = source.[LogoPlacementName],
+        target.[MarketID] = source.[MarketID],
+        target.[MarketName] = source.[MarketName],
+        target.[CatalogName] = source.[CatalogName],
+        target.[ProductImageNo] = source.[ProductImageNo],
+        target.[ProcessedFlag] = source.[ProcessedFlag],
+        target.[ProductImageName] = source.[ProductImageName],
+        target.[LocationProcessed] = source.[LocationProcessed],
+        target.[ImageProcessedBy] = source.[ImageProcessedBy],
+        target.[ImageProcessedDate] = source.[ImageProcessedDate],
+        target.[CCV2Staging] = source.[CCV2Staging],
+        target.[CCV2StagingDate] = source.[CCV2StagingDate],
+        target.[CCV2Production] = source.[CCV2Production],
+        target.[CCV2ProductionDate] = source.[CCV2ProductionDate],
+        target.[Createdby] = target.[Createdby],
+        target.[CreatedDate] = target.[CreatedDate],
+		target.[Updatedby] = 'PulseApp Pipeline',
+        target.[UpdatedDate] = getdate()
+WHEN NOT MATCHED BY TARGET THEN
+    INSERT (
+	[ImageID],
+	[ImageIdentifier],
+	[ImageName],
+	[ImageType],
+	[FileSize],
+	[Width],
+	[Height],
+	[LocationRaw],
+	[ImageCreatedBy],
+	[ImageCreatedDate],
+	[BrandID],
+	[BrandName],
+	[Tag],
+	[ProductID],
+	[LogoID],
+	[LogoName],
+	[LogoLocation],
+	[LogoPlacementID],
+	[LogoPlacementName],
+	[MarketID],
+	[MarketName],
+	[CatalogName],
+	[ProductImageNo],
+	[ProcessedFlag],
+	[ProductImageName],
+	[LocationProcessed],
+	[ImageProcessedBy],
+	[ImageProcessedDate],
+	[CCV2Staging],
+	[CCV2StagingDate],
+	[CCV2Production],
+	[CCV2ProductionDate],
+	[Createdby],
+	[CreatedDate],
+	[Updatedby],
+	[UpdatedDate]
+	)
+    
+	VALUES(
+	source.[ImageID],
+	source.[ImageIdentifier],
+	source.[ImageName],
+	source.[ImageType],
+	source.[FileSize],
+	source.[Width],
+	source.[Height],
+	source.[LocationRaw],
+	source.[ImageCreatedBy],
+	source.[ImageCreatedDate],
+	source.[BrandID],
+	source.[BrandName],
+	source.[Tag],
+	source.[ProductID],
+	source.[LogoID],
+	source.[LogoName],
+	source.[LogoLocation],
+	source.[LogoPlacementID],
+	source.[LogoPlacementName],
+	source.[MarketID],
+	source.[MarketName],
+	source.[CatalogName],
+	source.[ProductImageNo],
+	source.[ProcessedFlag],
+	source.[ProductImageName],
+	source.[LocationProcessed],
+	source.[ImageProcessedBy],
+	source.[ImageProcessedDate],
+	source.[CCV2Staging],
+	source.[CCV2StagingDate],
+	source.[CCV2Production],
+	source.[CCV2ProductionDate],
+	source.[Createdby],
+	source.[CreatedDate],
+	source.[Updatedby],
+	source.[UpdatedDate]
+	)
+;
+end
